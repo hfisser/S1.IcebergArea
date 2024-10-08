@@ -10,7 +10,7 @@ Detected icebergs with a CFAR iceberg area, and a predicted iceberg area in a ge
 ### How it works
 The module processes the Sentinel-1 data in three steps:
 1. Preprocessing with calibration, geocoding, noise removal (HV).
-2. CFAR iceberg delineation, using a CFAR gamma detector with a 10<sup>-6</sup> probability of false alarm, a 29-pixel outer window size, and a 21 guard window size.
+2. CFAR iceberg delineation, using a CFAR gamma detector with a 10<sup>-6</sup> probability of false alarm, a 29-pixel outer window size, and a 21-pixel guard window size.
 3. Iceberg area prediction, using the *BackscatterRL* CatBoost model.
 Follow these three steps for sensible results.
 
