@@ -14,24 +14,22 @@ setup(
     license = "Tbd",
     long_description=read("README.md"),
     install_requires = [
-        "numpy",
-        "scipy",
-        "scikit-learn",
-        "scikit-image",
-        "lxml",
+        "catboost",
+        "geopandas",
         "ipython",
         "loguru",
+        "lxml",
         "netCDF4",
-        "rasterstats",
-        "rasterio",
-        "geopandas",
-        "scikit-image",
         "numba",
-        "catboost"
+        "numpy",
+        "rasterio",
+        "rasterstats",
+        "scikit-image",
+        "scipy",
     ],
     packages = find_packages(where="src"),
     package_dir = {"": "src"},
-    package_data = {"": ["*.pickle", "*.xml"]},
+    package_data = {"": ["*.pickle", os.path.join("SnapGpt", "graphs", "*.xml")]},
     entry_points = {
         "console_scripts": [
         ]
