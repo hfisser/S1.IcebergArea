@@ -1,5 +1,5 @@
 ## S1.IcebergArea
-Predict backscatter-sensitive iceberg areas from Sentinel-1 extra-wide (EW) swath data. This Python module enables users to predict iceberg above-waterline areas from Sentinel-1 EW ground-range detected medium resolution (GRDM) data. The algorithm has been developed and tested for icebergs in open water. The algorithm predicts iceberg areas based on backscatter statistics of icebergs delineated using constant false alarm rate (CFAR) algorithm with a gamma distribution.
+Predict backscatter-sensitive iceberg above-waterline areas from Sentinel-1 extra-wide (EW) swath data.
 
 ### Citation
 Publication..
@@ -24,10 +24,11 @@ s1_iceberg_area.prepare_s1(dir_safe)
 icebergs = s1_iceberg_area.run_model()
 ```
 ### Data
-Sentinel-1 EW GRDM, HH and HV channel.
+Sentinel-1 EW ground-range detected medium resolution (GRDM) data, HH and HV channel.
 
-### How it works
-The module processes the Sentinel-1 data in three steps. Follow three steps:
+### Algorithm
+The algorithm has been developed and tested for icebergs in open water. The algorithm predicts iceberg areas based on backscatter statistics of icebergs delineated using constant false alarm rate (CFAR) algorithm with a gamma distribution. Follow the following three steps:
+
 1. Preprocessing with calibration, geocoding, noise removal (HV).
 2. CFAR iceberg delineation, using a CFAR gamma detector with a 10<sup>-6</sup> probability of false alarm, a 29-pixel outer window size, and a 21-pixel guard window size. CFAR runs separately for the HH channel, and the HV channel.
 3. Iceberg area prediction, using the backscatter-sensitive iceberg area model (*BackscatterRL* CatBoost model). The model runs separately for the HH channel, and the HV channel.
