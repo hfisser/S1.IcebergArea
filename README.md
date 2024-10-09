@@ -8,9 +8,10 @@ Publication..
 Install 
 
 ```shell
-conda env create -f environment.yml
-conda activate s1icebergareas
-pip install ...
+conda env create -f environment.yml  # conda environment
+conda activate s1icebergarea  # activate it
+pip install https://github.com/nansencenter/sentinel1denoised/archive/v1.4.0.tar.gz  # install Sentinel1Denoised package for noise correction in HV channel
+pip install ...  # install S1.IcebergArea package
 ```
 
 ### Example
