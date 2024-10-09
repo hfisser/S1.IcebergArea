@@ -10,10 +10,8 @@ Detected icebergs with a CFAR iceberg area, and a predicted iceberg area in a ge
 ### Installation
 Install 
 
-```python
-require 'redcarpet'
-markdown = Redcarpet.new("Hello World!")
-puts markdown.to_html
+```shell
+pip install .
 ```
 
 ### How it works
