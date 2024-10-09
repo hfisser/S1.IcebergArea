@@ -13,7 +13,6 @@ conda activate s1icebergarea  # activate it
 pip install https://github.com/nansencenter/sentinel1denoised/archive/v1.4.0.tar.gz  # install Sentinel1Denoised package for noise correction in HV channel
 pip install ...  # install S1.IcebergArea package with its dependencies
 ```
-
 ### Example
 ```python
 import os
@@ -28,6 +27,9 @@ icebergs = s1_iceberg_area.run_model(aoi=aoi)  # run area model
 ```
 ### Data
 Sentinel-1 EW ground-range detected medium resolution (GRDM) data, HH and HV channel.
+
+### Output
+A dictionary holding one geopandas GeoDataFrame per polarization channel. The GeoDataFrames contain the delineated iceberg outlines, backscatter statistics, the CFAR iceberg area ("area_CFAR"), and the predicted iceberg area ("area_BackscatterRL_CB").
 
 ### Algorithm
 The algorithm has been developed and tested for icebergs in open water. The algorithm predicts iceberg areas based on backscatter statistics of icebergs delineated using constant false alarm rate (CFAR) algorithm with a gamma distribution. Follow the following three steps:
