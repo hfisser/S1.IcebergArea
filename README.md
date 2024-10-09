@@ -5,7 +5,7 @@ Predict backscatter-sensitive iceberg above-waterline areas from Sentinel-1 extr
 Publication..
 
 ### Installation
-Install the dependencies and the S1.IcebergArea package in an Anaconda environment:
+Install dependencies and the S1.IcebergArea package in an Anaconda environment:
 
 ```shell
 conda env create -f environment.yml  # conda environment, install dependencies needed for Sentinel1Denoised
