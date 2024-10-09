@@ -7,6 +7,13 @@ A Sentinel-1 EW GRDM .SAFE folder.
 ### Output
 Detected icebergs with a CFAR iceberg area, and a predicted iceberg area in a geopandas GeoDataFrame.
 
+### Installation
+Install 
+
+'''python
+test = None
+'''
+
 ### How it works
 The module processes the Sentinel-1 data in three steps. Follow these three steps for sensible results:
 1. Preprocessing with calibration, geocoding, noise removal (HV).
