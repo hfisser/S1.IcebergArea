@@ -1,0 +1,9 @@
+name: s1icebergarea
+dependencies:
+  - python >=3.8, <4.0
+  - gdal
+  - lxml
+  - pip
+  - pip:
+    - beautifulsoup4
+    - requests

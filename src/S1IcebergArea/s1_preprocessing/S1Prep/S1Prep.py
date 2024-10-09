@@ -16,7 +16,6 @@ from S1IcebergArea.s1_preprocessing.geocoding.geocoding import geocode_S1_image_
 io = IO()
 FILE_CALIBRATION_GRAPH = io.get_gpt_graph_file("calibration")  # SNAP GPT graph
 FILE_BAND_MATH_GRAPH = io.get_gpt_graph_file("band_math")  # SNAP GPT graph
-print(FILE_BAND_MATH_GRAPH)
 PROJ_PATH = os.environ["PROJ_DATA"]
 
 
@@ -205,7 +204,7 @@ class S1Prep:
         file_base = file.split(".")[0]
         file_hv = f"{file_base}_hv.tif"
         file_hh = file_hv.replace("hv", "hh")
-        return {"hv": file_hv, "hh": file_hh}
+        return {"hh": file_hh, "hv": file_hv}
 
     @staticmethod
     def _get_file_name_calibrated(dir_safe):

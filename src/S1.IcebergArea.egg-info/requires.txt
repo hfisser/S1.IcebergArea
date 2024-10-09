@@ -1,0 +1,12 @@
+catboost
+geopandas
+ipython
+loguru
+lxml
+netCDF4
+numba
+numpy
+rasterio
+rasterstats
+scikit-image
+scipy
