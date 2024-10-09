@@ -18,10 +18,10 @@ pip install ...  # install S1.IcebergArea package
 ```python
 from S1IcebergArea import S1IcebergArea
 dir_safe = "/my/s1_data/S1A_EW_GRDM_1SDH_20240917T191651_20240917T191725_055709_06CDC8_7EF4.SAFE"  # unzipped
-dir_tmp = "/my/temporary_folder"
-s1_iceberg_area = S1IcebergArea(dir_tmp)
-s1_iceberg_area.prepare_s1(dir_safe)
-icebergs = s1_iceberg_area.run_model()
+dir_tmp = "/my/temporary_folder"  # folder where temporary files can be written
+s1_iceberg_area = S1IcebergArea(dir_tmp)  # initialize S1IcebergArea class
+s1_iceberg_area.prepare_s1(dir_safe)  # run calibration, noise removal
+icebergs = s1_iceberg_area.run_model()  # run area model
 ```
 ### Data
 Sentinel-1 EW ground-range detected medium resolution (GRDM) data, HH and HV channel.
