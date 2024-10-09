@@ -8,19 +8,21 @@ Publication..
 Install the dependencies and the S1.IcebergArea package in an Anaconda environment:
 
 ```shell
-conda env create -f environment.yml  # conda environment
+conda env create -f environment.yml  # conda environment, install dependencies needed for Sentinel1Denoised
 conda activate s1icebergarea  # activate it
 pip install https://github.com/nansencenter/sentinel1denoised/archive/v1.4.0.tar.gz  # install Sentinel1Denoised package for noise correction in HV channel
-pip install ...  # install S1.IcebergArea package
+pip install ...  # install S1.IcebergArea package with its dependencies
 ```
 
 ### Example
 ```python
+import os
 from S1IcebergArea import S1IcebergArea
+
 dir_safe = "/my/s1_data/S1A_EW_GRDM_1SDH_20240917T191651_20240917T191725_055709_06CDC8_7EF4.SAFE"  # unzipped
 dir_tmp = "/my/temporary_folder"  # folder where temporary files can be written
 s1_iceberg_area = S1IcebergArea(dir_tmp)  # initialize S1IcebergArea class
-s1_iceberg_area.prepare_s1(dir_safe)  # run calibration, noise removal
+s1_iceberg_area.prepare_s1(dir_safe, os.path.dirname(dir_safe))  # run calibration, noise removal
 icebergs = s1_iceberg_area.run_model()  # run area model
 ```
 ### Data
