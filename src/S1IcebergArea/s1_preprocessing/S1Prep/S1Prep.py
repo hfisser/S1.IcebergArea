@@ -220,12 +220,3 @@ class S1Prep:
             logging.info(f"Removed: {file_or_directory}")
         except FileNotFoundError:
             pass    
-
-
-if __name__ == "__main__":
-    dir_data = "/media/henrik/DATA/raster/s1/41XNF/Tracking"
-    for file_s1 in glob(os.path.join(dir_data, "*.SAFE")):
-        print(file_s1)
-        s1_prep = S1Prep(file_s1)
-        s1_prep.preprocess_s1(3996, 40, True, True, in_decibels=True)
-        s1_prep.cleanup()
