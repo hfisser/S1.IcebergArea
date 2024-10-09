@@ -1,4 +1,4 @@
-## S1.IcebergArea
+# S1.IcebergArea
 Predict backscatter-sensitive iceberg above-waterline areas from Sentinel-1 extra-wide (EW) swath data.
 
 ### Citation
