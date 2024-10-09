@@ -44,4 +44,4 @@ Icebergs appear as strong reflectors in synthetic aperture radar (SAR) data. In 
 This Python module depends on several third-party Python modules. Besides standard Python modules, we use code from three packages:
 1. The [Sentinel1Denoised package](https://github.com/nansencenter/sentinel1denoised/blob/master/README.md).
 2. Laust Færch implemented the CFAR algorithm used in this module: [CFAR object detection](https://github.com/LaustFaerch/cfar-object-detection). A modified version was used.
-3. Johannes Lohse and Catherine Taelman wrote the geocoding module for synthetic aperture radar data: [geocoding](). A modified version was used.
+3. Johannes Lohse and Catherine Taelman wrote the geocoding module for synthetic aperture radar data: [geocoding](https://github.com/jlo031/geocoding). A modified version was used.
