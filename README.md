@@ -17,7 +17,7 @@ pip install ...  # install S1.IcebergArea package with its dependencies
 ### Example
 ```python
 import os
-from S1IcebergArea import S1IcebergArea
+from S1IcebergArea.S1IcebergArea import S1IcebergArea
 
 dir_safe = "/my/s1_data/S1A_EW_GRDM_1SDH_20240917T191651_20240917T191725_055709_06CDC8_7EF4.SAFE"  # unzipped
 s1_iceberg_area = S1IcebergArea()  # initialize S1IcebergArea class
