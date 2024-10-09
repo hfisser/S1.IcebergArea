@@ -10,9 +10,11 @@ Detected icebergs with a CFAR iceberg area, and a predicted iceberg area in a ge
 ### Installation
 Install 
 
-'''python
-test = None
-'''
+```python
+require 'redcarpet'
+markdown = Redcarpet.new("Hello World!")
+puts markdown.to_html
+```
 
 ### How it works
 The module processes the Sentinel-1 data in three steps. Follow these three steps for sensible results:
