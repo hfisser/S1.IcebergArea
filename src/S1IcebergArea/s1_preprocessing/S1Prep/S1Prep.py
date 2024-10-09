@@ -1,4 +1,5 @@
 import os
+import shutil
 import logging
 import numpy as np
 import pandas as pd
@@ -7,15 +8,16 @@ from glob import glob
 from pathlib import Path
 from datetime import datetime
 from rasterio.mask import mask
-from SnapGpt.SnapGpt import SnapGpt
+from S1IcebergArea.s1_preprocessing.SnapGpt.SnapGpt import SnapGpt
 from s1denoise import Sentinel1Image
-from tools.array_utils.utils import get_data_footprint   ####
-from geocoding.geocoding import geocode_S1_image_from_GCPS ####
-from tools.file_utils.file_utils import remove_file_or_directory   ####
+from S1IcebergArea.io.IO import IO
+from S1IcebergArea.s1_preprocessing.geocoding.geocoding import geocode_S1_image_from_GCPS
 
-FILE_CALIBRATION_GRAPH = "/home/henrik/Code/tools/SnapGpt/graphs/s1_radiometric_calibration.xml"  # SNAP GPT graph
-FILE_BAND_MATH_GRAPH = "/home/henrik/Code/tools/SnapGpt/graphs/band_math.xml"  # SNAP GPT graph
-PROJ_PATH = os.environ["PROJ_LIB"]
+io = IO()
+FILE_CALIBRATION_GRAPH = io.get_gpt_graph_file("calibration")  # SNAP GPT graph
+FILE_BAND_MATH_GRAPH = io.get_gpt_graph_file("band_math")  # SNAP GPT graph
+print(FILE_BAND_MATH_GRAPH)
+PROJ_PATH = os.environ["PROJ_DATA"]
 
 
 class S1Prep:
@@ -86,8 +88,8 @@ class S1Prep:
                 remove_noise = False  # if noise correction fails (should rarely happen) don't do noise correction, but still process it
         with rio.open(file_calibrated) as src:
             meta = src.meta
-            hv = hv if remove_noise else src.read(2)
-            hh = src.read(1)
+            hv = hv if remove_noise else src.read(2)  # use output of S1Denoised if applicable. That's also calibrated sigma nought. Otherwise, use HV calibration output without noise correction
+            hh = src.read(1)  # use HH calibration output, there's no noise correction
         meta.update(count=1)
         self.files_calibrated = self._get_file_names_polarizations(file_calibrated)
         hv[hh < 1e-4] = 0  # edges
@@ -104,7 +106,7 @@ class S1Prep:
             self.files_geocoded[polarization] = os.path.join(self.dir_out, os.path.basename(file_s1.replace(".tif", "_geocoded.tif")))
             geocode_S1_image_from_GCPS(file_s1, self.dir_safe, self.files_geocoded[polarization], crs, resolution_target, overwrite=True, resampling="nearest", loglevel="DEBUG")  # Polar Stereographic, 40 m pixel spacing
         for file_s1 in self.files_calibrated.values():
-            remove_file_or_directory(file_s1)  # remove calibrated files
+            self.remove_file_or_directory(file_s1)  # remove calibrated files
 
     def geocode_incidence_angle(self, file_band_math_graph, crs, resolution_target):
         file_name = os.path.basename(self.dir_safe).replace(".SAFE", "")
@@ -120,7 +122,7 @@ class S1Prep:
             gpt.write_graph()
             gpt.execute()
             geocode_S1_image_from_GCPS(file_ia, self.dir_safe, self.file_ia_geocoded, crs, resolution_target, overwrite=True, resampling="nearest")
-            remove_file_or_directory(file_ia)
+            self.remove_file_or_directory(file_ia)
 
     def read_s1(self, aoi, crop):
         for polarization, file in self.files_geocoded.items():
@@ -162,9 +164,6 @@ class S1Prep:
             self.meta.update(dtype=self.data[polarization].dtype)
             with rio.open(file, "w", **self.meta) as dst:  # write masked data
                 dst.write(self.data[polarization], 1)
-
-    def get_footprint(self):
-        return get_data_footprint(self.files_geocoded["hh"], [0])
 
     def preprocess_s1(self, crs, resolution_target, remove_thermal_noise_hv=False, remove_texture_noise_hv=False, in_decibels=True):
         self.calibrate(FILE_CALIBRATION_GRAPH, remove_thermal_noise_hv, remove_texture_noise_hv)
@@ -211,6 +210,17 @@ class S1Prep:
     @staticmethod
     def _get_file_name_calibrated(dir_safe):
         return os.path.join(str(Path(dir_safe).parent), f"{os.path.basename(dir_safe)}_calibrated.tif")
+
+    @staticmethod
+    def remove_file_or_directory(file_or_directory):
+        try:
+            try:
+                os.remove(file_or_directory)
+            except IsADirectoryError:
+                shutil.rmtree(file_or_directory)
+            logging.info(f"Removed: {file_or_directory}")
+        except FileNotFoundError:
+            pass    
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 import numpy as np
-from S1Prep import S1Prep
+from S1IcebergArea.s1_preprocessing.S1Prep import S1Prep
 
 
 class Preprocessing:

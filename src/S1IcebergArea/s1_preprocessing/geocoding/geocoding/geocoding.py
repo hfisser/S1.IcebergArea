@@ -4,7 +4,6 @@
 Module for geocoding of image files.
 """ 
 
-import argparse
 import os
 import sys
 import pathlib
@@ -17,10 +16,10 @@ import numpy as np
 from osgeo import ogr, osr, gdal, gdalconst
 from PIL import Image, ImageDraw
 
-import config_geocoding as conf
-import Lib.S1_product_functions as S1
-import Lib.read_write_img as rwi
-import Lib.geocoding_functions as gf
+import S1IcebergArea.s1_preprocessing.geocoding.config_geocoding as conf
+import S1IcebergArea.s1_preprocessing.geocoding.Lib.S1_product_functions as S1
+import S1IcebergArea.s1_preprocessing.geocoding.Lib.read_write_img as rwi
+import S1IcebergArea.s1_preprocessing.geocoding.Lib.geocoding_functions as gf
 
 # -------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------- #

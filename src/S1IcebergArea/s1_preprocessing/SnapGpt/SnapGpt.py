@@ -1,6 +1,5 @@
 import os
 import subprocess
-import numpy as np
 from glob import glob
 from xml.etree import ElementTree as ET
 

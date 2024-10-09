@@ -5,14 +5,6 @@ import numba as nb
 Fast functions for CFAR moving window. Code modified froms: Laust Færch (https://github.com/LaustFaerch/cfar-object-detection)
 """
 
-@nb.jit('float32[:,:](float32[:,:], boolean[:,:])', parallel=True, nopython=True)
-def fast_edge_nanmean29(x, m):
-    return _edge_kernel_nanmean29(x, m)
-
-@nb.jit('float32[:,:](float32[:,:], boolean[:,:])', parallel=True, nopython=True)
-def fast_edge_nanmean49(x, m):
-    return _edge_kernel_nanmean49(x, m)
-
 # outer_window_size==29
 @nb.stencil(neighborhood=((-14, 14), (-14, 14)))
 def _edge_kernel_nanmean29(x, m):
@@ -52,3 +44,11 @@ def _edge_kernel_nanmean49(x, m):
             return nb.float32(cumul / valids)
     else:
         return nb.float32(np.nan)
+
+@nb.jit('float32[:,:](float32[:,:], boolean[:,:])', parallel=True, nopython=True)
+def fast_edge_nanmean29(x, m):
+    return _edge_kernel_nanmean29(x, m)
+
+@nb.jit('float32[:,:](float32[:,:], boolean[:,:])', parallel=True, nopython=True)
+def fast_edge_nanmean49(x, m):
+    return _edge_kernel_nanmean49(x, m)

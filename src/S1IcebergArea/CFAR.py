@@ -6,8 +6,8 @@ from scipy.special import gammaincc
 from scipy.optimize import minimize
 from rasterio.features import shapes
 from shapely.geometry import Polygon
-from src.s1_preprocessing.Preprocessing import Preprocessing
-from fast_moving_window import fast_edge_nanmean29, fast_edge_nanmean49
+from S1IcebergArea.s1_preprocessing.Preprocessing import Preprocessing
+from S1IcebergArea.fast_moving_window import fast_edge_nanmean29, fast_edge_nanmean49
 
 """
 CFAR implementation. Code modified froms: Laust Færch (https://github.com/LaustFaerch/cfar-object-detection)
@@ -18,18 +18,23 @@ class CFAR:
     def __init__(self) -> None:
         pass
 
-    def run_gamma(self, channel, pfa, ows):
+    def run_gamma(self, hh, hv, pfa, ows):
         """
-        :param: channel: np.float32 (y, x) the channel.
+        :param: hh: np.float32 (y, x) the HH channel in decibel intensities.
+        :param: hv: np.float32 (y, x) the HH channel in decibel intensities.
         :param pfa: float the probability of false alarm.
         :param ows: CFAR outer window size in pixels (side length).
         """
-        prep = Preprocessing()
-        channel_linear_intensity = prep.decibels_to_linear(channel)
-        outliers, edge_mean = self._gamma(channel_linear_intensity, pfa, ows, ~np.isnan(channel_linear_intensity))  # run on linear intensities
-        edge_mean_db = np.float16(prep.linear_to_decibels(edge_mean))
-        contrast = np.float16(channel - edge_mean_db)  # both in decibels
-        return np.int8(outliers), edge_mean_db, contrast  # binary, decibels, decibels
+        outliers, clutter, contrast = [], [], []
+        for channel in [hh, hv]:
+            prep = Preprocessing()
+            channel_linear_intensity = prep.decibels_to_linear(channel)
+            outliers_channel, edge_mean_channel = self._gamma(channel_linear_intensity, pfa, ows, ~np.isnan(channel_linear_intensity))  # run on linear intensities
+            outliers.append(outliers_channel)
+            edge_mean_db = np.float16(prep.linear_to_decibels(edge_mean_channel))
+            clutter.append(edge_mean_db)  # in decibels
+            contrast.append(np.float16(channel - edge_mean_db))  # both in decibels
+        return np.int8(outliers), np.float16(clutter), np.float16(contrast)  # binary, decibels, decibels
 
     def to_polygons(self, outliers, transform, crs):
         """
@@ -48,13 +53,12 @@ class CFAR:
         polygons = polygons[polygons.area < np.nanmax(polygons.area)]  # eliminate bounding box (always created)
         polygons.crs = crs
         polygons.index = list(range(len(polygons)))
-        polygons["area"] = polygons.area
-
         polygons = polygons[polygons.type == "Polygon"]  # no MultiPolygons
         polygons = polygons[np.add(np.int8(~polygons.is_empty), np.int8(polygons.is_valid)) == 2]
         polygons.index = list(range(len(polygons)))
         if len(polygons) > 0:
             polygons = self._merge_touching_polygons(polygons)
+        polygons["area"] = polygons.area
         return polygons
 
     def _gamma(self, channel, pfa, ows, mask=0):
@@ -119,7 +123,7 @@ class CFAR:
         return a    
 
     @staticmethod
-    def merge_touching_polygons(gdf):
+    def _merge_touching_polygons(gdf):
         geoms = gpd.GeoSeries(gdf.geometry.buffer(0.1).unary_union.buffer(-0.1)).explode(index_parts=False)
         gdf_merged = gpd.GeoDataFrame({"geometry": list(geoms.geometry)})
         gdf_merged.geometry = gdf_merged.geometry

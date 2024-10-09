@@ -13,7 +13,7 @@ import numpy as np
 from osgeo import gdal, osr, gdal_array
 from loguru import logger
 
-import Lib.read_write_img as rwi
+import S1IcebergArea.s1_preprocessing.geocoding.Lib.read_write_img as rwi
 
 # -------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------- # 

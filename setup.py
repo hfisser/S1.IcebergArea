@@ -6,11 +6,11 @@ def read(fname):
         return f.read()
 
 setup(
-    name = "S1.IAWA",
+    name = "S1.IcebergArea",
     version = "0.0.0",
     author = "Henrik Fisser",
     author_email = "henrik.fisser@uit.no",
-    description = ("Module for predicting iceberg above-waterline areas for Sentinel-1 data."),
+    description = ("Package for predicting iceberg above-waterline areas for Sentinel-1 data."),
     license = "Tbd",
     long_description=read("README.md"),
     install_requires = [
@@ -22,6 +22,12 @@ setup(
         "ipython",
         "loguru",
         "netCDF4",
+        "rasterstats",
+        "rasterio",
+        "geopandas",
+        "scikit-image",
+        "numba",
+        "catboost"
     ],
     packages = find_packages(where="src"),
     package_dir = {"": "src"},
