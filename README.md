@@ -41,7 +41,7 @@ The algorithm has been developed and tested for icebergs in open water. The algo
 Icebergs appear as strong reflectors in synthetic aperture radar (SAR) data. In a varying background (*ocean clutter*), CFAR algorithms detect icebergs as outliers. A connected set of outlier pixel is grouped as an iceberg with an area. However, these CFAR-based iceberg areas exhibit considerable errors, as they inherit variations in the ocean clutter, and in the iceberg backscatter, along with effects of the spatial resolution. The *BackscatterRL* CatBoost models are aware of these variations. The models were trained end evaluated with reference to Sentinel-2 iceberg areas in several hundred acquisitions across the Arctic in the years 2016-2023 from May to September. 
 
 ### Credits
-This Python module depends on several third-party Python modules. Besides standard Python modules, we use code from three packages:
+This Python module depends on several third-party Python packages. Besides standard Python packages, we use code from three packages:
 1. The [Sentinel1Denoised package](https://github.com/nansencenter/sentinel1denoised/blob/master/README.md).
 2. Laust Færch implemented the CFAR algorithm used in this module: [CFAR object detection](https://github.com/LaustFaerch/cfar-object-detection). A modified version was used.
 3. Johannes Lohse and Catherine Taelman wrote the geocoding module for synthetic aperture radar data: [geocoding](https://github.com/jlo031/geocoding). A modified version was used.
