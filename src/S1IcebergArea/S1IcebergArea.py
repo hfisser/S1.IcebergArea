@@ -58,6 +58,7 @@ class S1IcebergArea:
         icebergs_both_channels = dict()
         for i, pol in enumerate(["hh", "hv"]):
             self.icebergs = cfar.to_polygons(outliers[i], self.meta_s1["transform"], self.meta_s1["crs"])  # delineate connected pixels as icebergs
+            self.icebergs = self.icebergs[self.icebergs["area"] > 45 ** 2]  # drop single pixel detections (45 instead of 40 to allow for potential inaccuracies in polygon area)
             self._extract_backscatter_stats(clutter, contrast)  # for channels extract backscatter, clutter, contrast, and incidence angle statistics for delineated icebergs
             features = self._reshape_features()  # prepare feature array for area prediction
             self._predict_area(features, pol)  # predict iceberg areas using BackscatterRL CB model
