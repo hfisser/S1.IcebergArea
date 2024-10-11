@@ -7,7 +7,7 @@ Publication..
 ### Installation
 
 #### Requirement
-You need a [SNAP](https://step.esa.int/main/download/snap-download/) installation. The path to the graph processing tool (GPT) has to be set. This should be done automatically when installing SNAP. Check if GPT is accessible on the command line:
+You need a [SNAP](https://step.esa.int/main/download/snap-download/) installation and the path to the graph processing tool (GPT) has to be added to the system path. SNAP normally does this for you during the installation. Check if GPT is accessible on the command line:
 ```shell
 gpt -h
 ```
