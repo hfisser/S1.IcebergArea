@@ -5,7 +5,13 @@ Predict backscatter-sensitive iceberg above-waterline areas from Sentinel-1 extr
 Publication..
 
 ### Installation
-Install dependencies and the S1.IcebergArea package in an Anaconda environment:
+
+#### Requirement
+You need a [SNAP](https://step.esa.int/main/download/snap-download/) installation. The path to the graph processing tool (GPT) has to be set. This should be done automatically when installing SNAP. Check if GPT is accessible on the command line:
+```shell
+gpt -h
+```
+Then install dependencies and the S1.IcebergArea package in an Anaconda environment:
 
 ```shell
 conda env create -f environment.yml  # conda environment, install dependencies needed for Sentinel1Denoised
