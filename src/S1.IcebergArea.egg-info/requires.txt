@@ -1,0 +1,13 @@
+catboost==1.2.5
+fiona==1.9.6
+geopandas==0.12.2
+ipython
+loguru
+lxml
+netCDF4==1.5.7
+numba==0.56.4
+numpy==1.23.5
+rasterio==1.2.10
+rasterstats==0.20.0
+scikit-image==0.19.3
+scipy==1.10.0

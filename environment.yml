@@ -1,9 +1,24 @@
 name: s1icebergarea
 dependencies:
-  - python >=3.8, <4.0
-  - gdal
+  - python=3.8
+  - rasterio=1.2.10
+  - gdal=3.0.2
+  - fiona=1.8.22
+  - conda-forge::geopandas=0.12.2
+  - loguru
   - lxml
+  - netCDF4=1.5.7
+  - numba=0.56.4
+  - numpy=1.23.5
   - pip
+  - scikit-image=0.19.3
+  - scikit-learn=1.2.0
+  - scipy=1.10.0
   - pip:
     - beautifulsoup4
+    - geopandas==0.12.2
+    - catboost==1.2.5
+    - rasterstats==0.20.0
     - requests
+    - shapely==1.8.4
+    

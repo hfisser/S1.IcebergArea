@@ -1,11 +1,13 @@
 import warnings
 import numpy as np
+import pandas as pd
 import geopandas as gpd
 from skimage.measure import label
 from scipy.special import gammaincc
 from scipy.optimize import minimize
 from rasterio.features import shapes
 from shapely.geometry import Polygon
+from joblib import Parallel, delayed
 from S1IcebergArea.s1_preprocessing.Preprocessing import Preprocessing
 from S1IcebergArea.fast_moving_window import fast_edge_nanmean29, fast_edge_nanmean49
 
@@ -36,29 +38,40 @@ class CFAR:
             contrast.append(np.float16(channel - edge_mean_db))  # both in decibels
         return np.int8(outliers), np.float16(clutter), np.float16(contrast)  # binary, decibels, decibels
 
-    def to_polygons(self, outliers, transform, crs):
+    def _to_polygons(self, outliers, transform, crs):
         """
         :param: outliers np.int8 binary outliers (1=outlier, 0=no outlier).
-        :param: transform Affine transform corresponding to the outliers, from rasterio meta.
-        :param: crs str EPSG code (e.g. 'EPSG:3996') specifies the coordinate reference system.
         """
         polygons = gpd.GeoDataFrame()
-        label_objects = label(outliers).astype(np.float32)  # float32 for shapes() method
-        results = ({"properties": {"raster_val": v}, "geometry": s}
-        for _, (s, v) in enumerate(shapes(label_objects, transform=transform)))
-        for i, polygon in enumerate(results):
-            polygons.loc[i, "geometry"] = Polygon(polygon["geometry"]["coordinates"][0])
-            polygons.loc[i, "raster_val"] = polygon["properties"]["raster_val"]
+        labels = label(outliers).astype(np.float32)  # float32 for shapes() method
+        #logging.info("Eliminating out-of-size-range ice features")
+        #logging.info("Convolution")
+        #labels_convoled_3x3 = convolve(np.int8(labels != 0), np.ones((3, 3)))
+        #labels[labels_convoled_3x3 < 3] = 0  # eliminate pixels with less than 2 neighbors
+        #labels_convoled_3x3 = convolve(np.int8(labels != 0), np.ones((3, 3)))
+        #labels[labels_convoled_3x3 < 3] = 0  # eliminate pixels with less than 2 neighbors
+        #labels_convoled_3x3 = convolve(np.int8(labels != 0), np.ones((3, 3)))
+        #labels[labels_convoled_3x3 < 3] = 0  # eliminate pixels with less than 2 neighbors
+        #labels_convoled_3x3 = convolve(np.int8(labels != 0), np.ones((3, 3)))
+        #labels[labels_convoled_3x3 < 3] = 0  # eliminate pixels with less than 2 neighbors
+        #labels[labels == 0] = np.nan
+        results = Parallel(n_jobs=6)(delayed(self._do_polygonize)(labels, value, transform, crs) for value in np.unique(labels[np.isfinite(labels)]))
+        polygons = gpd.GeoDataFrame(pd.concat(results))
         polygons.geometry = polygons["geometry"]
-        polygons = polygons[polygons.area < np.nanmax(polygons.area)]  # eliminate bounding box (always created)
-        polygons.crs = crs
+        #polygons = polygons[np.bool8(polygons.area >= MINIMUM_SIZE) * np.bool8(polygons.area < MAXIMUM_SIZE)]
+        polygons.crs = self.meta_s2["crs"]
         polygons.index = list(range(len(polygons)))
-        polygons = polygons[polygons.type == "Polygon"]  # no MultiPolygons
-        polygons = polygons[np.add(np.int8(~polygons.is_empty), np.int8(polygons.is_valid)) == 2]
         polygons.index = list(range(len(polygons)))
-        if len(polygons) > 0:
-            polygons = self._merge_touching_polygons(polygons)
         polygons["area"] = polygons.area
+        return polygons
+
+    def _do_polygonize(self, labels, value, transform, crs):
+        polygons = gpd.GeoDataFrame()
+        shapes_results = shapes(labels, mask=labels == value, connectivity=4, transform=self.meta_s2["transform"])
+        for i, (s, v) in enumerate(shapes_results):
+            if v != 0:
+                polygons.loc[i, "geometry"] = Polygon(s["coordinates"][0])
+                polygons.loc[i, "raster_val"] = v
         return polygons
 
     def _gamma(self, channel, pfa, ows, mask=0):

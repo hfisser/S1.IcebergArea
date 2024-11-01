@@ -42,6 +42,7 @@ class S1IcebergArea:
         :param: dir_out str the directory where the preprocessed Sentinel-1 data shall be written to.
         """
         self.file_s1 = self.prep.preprocess_s1(dir_safe, dir_out)
+        return self.file_s1
         
     def run_model(self, file_s1=None, aoi=None):
         """
@@ -57,7 +58,7 @@ class S1IcebergArea:
         outliers, clutter, contrast = cfar.run_gamma(self.data_s1[0], self.data_s1[1], PFA, OWS)  # detect outliers using gamma CFAR
         icebergs_both_channels = dict()
         for i, pol in enumerate(["hh", "hv"]):
-            self.icebergs = cfar.to_polygons(outliers[i], self.meta_s1["transform"], self.meta_s1["crs"])  # delineate connected pixels as icebergs
+            self.icebergs = cfar._to_polygons(outliers[i], self.meta_s1["transform"], self.meta_s1["crs"])  # delineate connected pixels as icebergs
             self.icebergs = self.icebergs[self.icebergs["area"] > 45 ** 2]  # drop single pixel detections (45 instead of 40 to allow for potential inaccuracies in polygon area)
             self._extract_backscatter_stats(clutter, contrast)  # for channels extract backscatter, clutter, contrast, and incidence angle statistics for delineated icebergs
             features = self._reshape_features()  # prepare feature array for area prediction

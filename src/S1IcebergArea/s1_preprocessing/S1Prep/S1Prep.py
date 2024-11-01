@@ -169,7 +169,7 @@ class S1Prep:
         self.geocode_backscatter(crs, resolution_target)
         self.geocode_incidence_angle(FILE_BAND_MATH_GRAPH, crs, resolution_target)
         pols = [pol.upper() for pol in list(self.files_geocoded.keys())]
-        file_name = "{0}_{1}_{2}_rm_thermal_noise_hv{3}_rm_texture_noise_hv{4}.tif".format(os.path.basename(self.files_geocoded["hh"].split("_hh")[0]), crs, resolution_target, remove_thermal_noise_hv, remove_texture_noise_hv)
+        file_name = "{0}_{1}_{2}_rm_thermal_noise_hv{3}_rm_texture_noise_hv{4}_geocoded.tif".format(os.path.basename(self.files_geocoded["hh"].split("_hh")[0]), crs, resolution_target, remove_thermal_noise_hv, remove_texture_noise_hv)
         file_out = os.path.join(self.dir_out, file_name)
         with rio.open(self.files_geocoded["hh"]) as src:
             meta = src.meta
