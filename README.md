@@ -5,7 +5,13 @@ Predict backscatter-sensitive iceberg above-waterline areas from Sentinel-1 extr
 Publication..
 
 ### Installation
-Install dependencies and the S1.IcebergArea package in an Anaconda environment:
+
+#### Requirement
+You need a [SNAP](https://step.esa.int/main/download/snap-download/) installation and the path to the graph processing tool (GPT) has to be added to the system path. SNAP normally does this for you during installation. Check if GPT is accessible on the command line:
+```shell
+gpt -h
+```
+Then install dependencies and the S1.IcebergArea package in an Anaconda environment:
 
 ```shell
 conda env create -f environment.yml  # conda environment, install dependencies needed for Sentinel1Denoised
@@ -38,7 +44,7 @@ The algorithm has been developed and tested for icebergs in open water. The algo
 3. Iceberg area prediction, using the backscatter-sensitive iceberg area model (*BackscatterRL* CatBoost model). The model runs separately for the HH channel, and the HV channel.
 
 ### Background
-Icebergs appear as strong reflectors in synthetic aperture radar (SAR) data. In a varying background (*ocean clutter*), CFAR algorithms detect icebergs as outliers. A connected set of outlier pixel is grouped as an iceberg with an area. However, these CFAR-based iceberg areas exhibit considerable errors, as they inherit variations in the ocean clutter, and in the iceberg backscatter, along with effects of the spatial resolution. The *BackscatterRL* CatBoost models are aware of these variations. The models were trained end evaluated with reference to Sentinel-2 iceberg areas in several hundred acquisitions across the Arctic in the years 2016-2023 from May to September. 
+Icebergs appear as strong reflectors in synthetic aperture radar (SAR) data. In a varying surrounding *ocean clutter*, CFAR algorithms detect icebergs as outliers. A connected set of outlier pixel is grouped as an iceberg with an area. However, these CFAR-based iceberg areas exhibit considerable errors, as they inherit variations in the ocean clutter, and in the iceberg backscatter, along with effects of the spatial resolution. The *BackscatterRL* CatBoost models are aware of these variations. The models were trained end evaluated with reference to Sentinel-2 iceberg areas in several hundred acquisitions across the Arctic in the years 2016-2023 from May to September. 
 
 ### Credits
 Besides standard Python packages, we use code from three packages:
