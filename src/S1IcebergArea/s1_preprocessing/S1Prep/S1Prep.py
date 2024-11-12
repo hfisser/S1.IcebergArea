@@ -16,7 +16,7 @@ from S1IcebergArea.s1_preprocessing.geocoding.geocoding import geocode_S1_image_
 io = IO()
 FILE_CALIBRATION_GRAPH = io.get_gpt_graph_file("calibration")  # SNAP GPT graph
 FILE_BAND_MATH_GRAPH = io.get_gpt_graph_file("band_math")  # SNAP GPT graph
-PROJ_PATH = os.environ["PROJ_DATA"]
+#PROJ_PATH = os.environ["PROJ_DATA"]
 
 
 class S1Prep:

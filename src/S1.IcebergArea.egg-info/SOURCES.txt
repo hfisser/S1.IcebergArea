@@ -1,3 +1,4 @@
+LICENSE
 README.md
 setup.py
 src/S1.IcebergArea.egg-info/PKG-INFO
@@ -6,6 +7,7 @@ src/S1.IcebergArea.egg-info/dependency_links.txt
 src/S1.IcebergArea.egg-info/requires.txt
 src/S1.IcebergArea.egg-info/top_level.txt
 src/S1IcebergArea/CFAR.py
+src/S1IcebergArea/IcebergClassifier.py
 src/S1IcebergArea/S1IcebergArea.py
 src/S1IcebergArea/__init__.py
 src/S1IcebergArea/fast_moving_window.py

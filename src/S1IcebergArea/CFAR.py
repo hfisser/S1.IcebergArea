@@ -15,6 +15,8 @@ from S1IcebergArea.fast_moving_window import fast_edge_nanmean29, fast_edge_nanm
 CFAR implementation. Code modified froms: Laust Færch (https://github.com/LaustFaerch/cfar-object-detection)
 """
 
+MINIMUM_SIZE = 2 * 40 ** 2
+
 
 class CFAR:
     def __init__(self) -> None:
@@ -44,30 +46,17 @@ class CFAR:
         """
         polygons = gpd.GeoDataFrame()
         labels = label(outliers).astype(np.float32)  # float32 for shapes() method
-        #logging.info("Eliminating out-of-size-range ice features")
-        #logging.info("Convolution")
-        #labels_convoled_3x3 = convolve(np.int8(labels != 0), np.ones((3, 3)))
-        #labels[labels_convoled_3x3 < 3] = 0  # eliminate pixels with less than 2 neighbors
-        #labels_convoled_3x3 = convolve(np.int8(labels != 0), np.ones((3, 3)))
-        #labels[labels_convoled_3x3 < 3] = 0  # eliminate pixels with less than 2 neighbors
-        #labels_convoled_3x3 = convolve(np.int8(labels != 0), np.ones((3, 3)))
-        #labels[labels_convoled_3x3 < 3] = 0  # eliminate pixels with less than 2 neighbors
-        #labels_convoled_3x3 = convolve(np.int8(labels != 0), np.ones((3, 3)))
-        #labels[labels_convoled_3x3 < 3] = 0  # eliminate pixels with less than 2 neighbors
-        #labels[labels == 0] = np.nan
         results = Parallel(n_jobs=6)(delayed(self._do_polygonize)(labels, value, transform, crs) for value in np.unique(labels[np.isfinite(labels)]))
         polygons = gpd.GeoDataFrame(pd.concat(results))
         polygons.geometry = polygons["geometry"]
-        #polygons = polygons[np.bool8(polygons.area >= MINIMUM_SIZE) * np.bool8(polygons.area < MAXIMUM_SIZE)]
-        polygons.crs = self.meta_s2["crs"]
-        polygons.index = list(range(len(polygons)))
+        polygons.crs = crs
         polygons.index = list(range(len(polygons)))
         polygons["area"] = polygons.area
         return polygons
 
     def _do_polygonize(self, labels, value, transform, crs):
         polygons = gpd.GeoDataFrame()
-        shapes_results = shapes(labels, mask=labels == value, connectivity=4, transform=self.meta_s2["transform"])
+        shapes_results = shapes(labels, mask=labels == value, connectivity=4, transform=transform)
         for i, (s, v) in enumerate(shapes_results):
             if v != 0:
                 polygons.loc[i, "geometry"] = Polygon(s["coordinates"][0])

@@ -1,13 +1,19 @@
+
+import logging
 import numpy as np
 from S1IcebergArea.io.IO import IO
 from rasterstats import zonal_stats
 from S1IcebergArea.CFAR import CFAR
+from S1IcebergArea.IcebergClassifier import IcebergClassifier
 from S1IcebergArea.s1_preprocessing.Preprocessing import Preprocessing
 
 """
 This code runs models for iceberg area prediction from Sentinel-1 EW GRDM data (HH, HV). The models use the iceberg area initially delineated by a CFAR gamma iceberg detector, backscatter statistics, and the incidence angle in the prediction.
 """
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-3s %(message)s")
+
+POLARIZATIONS = ["hv", "hh"]
 PFA = 1e-6
 OWS = 29
 STATS = "mean"
@@ -53,28 +59,40 @@ class S1IcebergArea:
         self.file_s1 = file_s1 if file_s1 is not None else self.file_s1
         if self.file_s1 is None:
             raise ValueError("Please provide a Sentinel-1 file as file_s1 argument and/or run prepare_s1(), which will store the file_s1 information.")
+        logging.info("Reading S1 data")
         self.data_s1, self.meta_s1 = self.io.read_raster(self.file_s1, aoi)  # read S1 data
         cfar = CFAR()
-        outliers, clutter, contrast = cfar.run_gamma(self.data_s1[0], self.data_s1[1], PFA, OWS)  # detect outliers using gamma CFAR
+        logging.info("Running CFAR")
+        outliers, clutter, contrast = cfar.run_gamma(self.data_s1[1], self.data_s1[0], PFA, OWS)  # detect outliers using gamma CFAR
         icebergs_both_channels = dict()
-        for i, pol in enumerate(["hh", "hv"]):
+        for i, pol in enumerate(POLARIZATIONS):
+            pol_upper = pol.upper()
             self.icebergs = cfar._to_polygons(outliers[i], self.meta_s1["transform"], self.meta_s1["crs"])  # delineate connected pixels as icebergs
-            self.icebergs = self.icebergs[self.icebergs["area"] > 45 ** 2]  # drop single pixel detections (45 instead of 40 to allow for potential inaccuracies in polygon area)
+            if len(self.icebergs) == 0:
+                continue
+            self.icebergs = self.icebergs[self.icebergs["area"] >= 45 ** 2]  # drop single pixel detections (45 instead of 40 to allow for potential inaccuracies in polygon area)
+            self.icebergs.index = list(range(len(self.icebergs)))
+            logging.info(f"{pol_upper} - Extracting statistics")
             self._extract_backscatter_stats(clutter, contrast)  # for channels extract backscatter, clutter, contrast, and incidence angle statistics for delineated icebergs
+            logging.info(f"{pol_upper} - Predicting area")
             features = self._reshape_features()  # prepare feature array for area prediction
             self._predict_area(features, pol)  # predict iceberg areas using BackscatterRL CB model
-            icebergs_both_channels[pol] = self.icebergs.copy()
+            self.icebergs["perimeter_index"] = self._calc_perimeter_index(self.icebergs.geometry)
+            logging.info(f"{pol_upper} - Classifying icebergs")
+            classifier = IcebergClassifier()        
+            icebergs_both_channels[pol] = classifier.predict(self.icebergs, pol)
+        logging.info("Finished S1 iceberg detection and area retrieval")
         return icebergs_both_channels  # contains CFAR area and predicted area, one GeoDataFrame per channel
     
     def _extract_backscatter_stats(self, clutter, contrast):
-        for i, key in enumerate(["hh", "hv", "ia"]):  # channels and incidence angle
+        for i, key in enumerate(POLARIZATIONS + ["ia"]):  # channels and incidence angle
             data = self.data_s1[i]
             stats = zonal_stats(self.icebergs, self.prep.decibels_to_linear(data) if key != "ia" else data, affine=self.meta_s1["transform"], stats=STATS, nodata=np.nan)  # calc stats in linear intensities
             for j, stat in enumerate(stats):  # individual statistics (only mean in this case)
                 for stat_name, value in stat.items():
                     self.icebergs.loc[j, f"{key}_{stat_name}"] = self.prep.linear_to_decibels(value) if key != "ia" else value  # save stats in decibels
         for i, (key, data) in enumerate(zip(["clutter", "contrast"], [clutter, contrast])):
-            for pol_idx, pol in enumerate(["hh", "hv"]):
+            for pol_idx, pol in enumerate(POLARIZATIONS):
                 stats = zonal_stats(self.icebergs, self.prep.decibels_to_linear(data[pol_idx]), affine=self.meta_s1["transform"], stats=STATS, nodata=np.nan)  # calc stats in linear intensities
                 for j, stat in enumerate(stats):  # individual stats (only mean in this case)
                     for stat_name, value in stat.items():
@@ -92,3 +110,7 @@ class S1IcebergArea:
         area_idx = FEATURES.index("area")
         features[:, area_idx] = np.sqrt(features[:, area_idx])  # root length goes into model (square root of area)
         return features
+
+    @staticmethod
+    def _calc_perimeter_index(polygons):
+        return (2 * np.sqrt(np.pi * polygons.area)) / polygons.exterior.length
