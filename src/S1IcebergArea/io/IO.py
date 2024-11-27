@@ -8,6 +8,7 @@ from rasterio.mask import mask
 FILE_NAME_MODEL_HH = "S1_EW_GRDM_HH_BackscatterRL_CB_v0.0.pickle"
 FILE_NAME_MODEL_HV = "S1_EW_GRDM_HV_BackscatterRL_CB_v0.0.pickle"
 
+MIN_IA = 19.6
 
 class IO:
     def __init__(self) -> None:
@@ -21,7 +22,8 @@ class IO:
                 data = src.read()
             else:
                 data, transform = mask(src, list(aoi.to_crs(meta["crs"]).geometry), crop=True, nodata=np.nan)
-                meta.update(transform=transform, height=data.shape[1], width=data.shape[2])
+                meta.update(transform=transform, height=data.shape[-2], width=data.shape[-1])
+        data[:, data[-1] < MIN_IA] = np.nan  # to avoid scene edge
         return data, meta
 
     @staticmethod

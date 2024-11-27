@@ -1,9 +1,13 @@
 
 import logging
 import numpy as np
+import pandas as pd
+import geopandas as gpd
 from S1IcebergArea.io.IO import IO
 from rasterstats import zonal_stats
 from S1IcebergArea.CFAR import CFAR
+from joblib import Parallel, delayed
+from shapely.geometry import LineString
 from S1IcebergArea.IcebergClassifier import IcebergClassifier
 from S1IcebergArea.s1_preprocessing.Preprocessing import Preprocessing
 
@@ -13,9 +17,10 @@ This code runs models for iceberg area prediction from Sentinel-1 EW GRDM data (
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-3s %(message)s")
 
+N_JOBS = 4
 POLARIZATIONS = ["hv", "hh"]
 PFA = 1e-6
-OWS = 29
+OWS = 49
 STATS = "mean"
 FEATURES = [        
     "area",
@@ -78,25 +83,100 @@ class S1IcebergArea:
             features = self._reshape_features()  # prepare feature array for area prediction
             self._predict_area(features, pol)  # predict iceberg areas using BackscatterRL CB model
             self.icebergs["perimeter_index"] = self._calc_perimeter_index(self.icebergs.geometry)
+            self.icebergs["length"] = Parallel(n_jobs=N_JOBS)(delayed(self._calculate_length)(polygon) for polygon in self.icebergs.geometry)
+            self.icebergs["length_root_length_ratio"] = np.float32(self.icebergs["length"] / np.sqrt(self.icebergs.area))
             logging.info(f"{pol_upper} - Classifying icebergs")
-            classifier = IcebergClassifier()        
+            classifier = IcebergClassifier()     
             icebergs_both_channels[pol] = classifier.predict(self.icebergs, pol)
+        logging.info("Merging channels")
+        if len(icebergs_both_channels) > 0:
+            icebergs_both_channels["hh_hv_merged"] = self._merge_channels(icebergs_both_channels)
+        icebergs_both_channels["hh_hv_merged"] = self._calculate_synthesized_areas(icebergs_both_channels["hh_hv_merged"])
         logging.info("Finished S1 iceberg detection and area retrieval")
-        return icebergs_both_channels  # contains CFAR area and predicted area, one GeoDataFrame per channel
-    
+        return icebergs_both_channels
+
+    def _calculate_synthesized_areas(self, icebergs):   
+        areas_s1 = np.float32(icebergs["AREA_BACKSCATTERRL_CB"])     
+        ratio = np.clip(np.float32(np.sqrt(areas_s1) / 440 * 100) ** 2 / 10000, 0, 1)
+        icebergs["AREA_SYN"] = (1 - ratio) * areas_s1 + ratio * np.float32(icebergs["AREA_CFAR"])
+        return icebergs
+
+    def _merge_channels(self, icebergs_both_channels):           
+        col_area_hh = "area_BackscatterRL_CB_HH"
+        col_area_hv = col_area_hh.replace("HH", "HV")
+        col_area_final = col_area_hh.replace("_HH", "").upper()
+        col_area_cfar_final = "AREA_CFAR"
+        try:
+            hh = icebergs_both_channels["hh"]
+        except KeyError:
+            hh = None
+        try:
+            hv = icebergs_both_channels["hv"]
+        except KeyError:
+            hv = None
+        if any([hh is None, hv is None]):
+            pol = "hh" if hv is None else "hv"
+            concat = hh if pol == "hh" else hv
+            concat[col_area_cfar_final] = concat[f"area_CFAR_{pol}"]
+            concat[col_area_final] = concat[col_area_hh if pol == "hh" else col_area_hv]
+            concat["is_iceberg"] = concat[f"is_iceberg_{pol}"]
+            concat.rename(columns={"sf": "sf_backscatter"}, inplace=True)
+            for col in concat:
+                if col[-3:] == f"_{pol}":
+                    concat.rename(columns={col: col[:-3]}, inplace=True)
+            concat["DETECTION_CHANNEL"] = pol.upper()
+        else:
+            for i, row_hh in hh.iterrows():
+                intersecting_idxs, intersecting_areas = [], []
+                for j, row_hv in hv.iterrows():
+                    if row_hh["geometry"].buffer(20).intersects(row_hv["geometry"]):
+                        intersecting_idxs.append(j)
+                        intersecting_areas.append(row_hv[f"area_CFAR"])
+                if len(intersecting_areas) == 0:
+                    continue
+                intersecting_idxs = np.int64(intersecting_idxs)
+                if np.nanmax(intersecting_areas) > row_hh["area_CFAR"]:
+                    for idx in intersecting_idxs[intersecting_idxs != intersecting_idxs[np.argmax(intersecting_areas)]]:
+                        hv.drop(index=idx, inplace=True)
+                    hh.drop(index=i, inplace=True)
+                else:
+                    for idx in intersecting_idxs:
+                        hv.drop(index=idx, inplace=True)
+            hh["DETECTION_CHANNEL"] = "HH"
+            hv["DETECTION_CHANNEL"] = "HV"
+            for col in hh:
+                if col[-3:].lower() == "_hh":
+                    hh.rename(columns={col: col[:-3]}, inplace=True)
+            for col in hv:
+                if col[-3:].lower() == "_hv":
+                    hv.rename(columns={col: col[:-3]}, inplace=True)
+            hh.rename(columns={"area_BackscatterRL_CB": col_area_final}, inplace=True)
+            hv.rename(columns={"area_BackscatterRL_CB": col_area_final}, inplace=True)
+            concat = gpd.GeoDataFrame(pd.concat([hh, hv]))
+            concat.rename(columns={"sf": "sf_backscatter"}, inplace=True)
+            concat.geometry = concat["geometry"]
+            concat.crs = hh.crs
+            concat.index = list(range(len(concat)))
+            concat.rename(columns={"area_CFAR": col_area_cfar_final}, inplace=True)
+        #condition = concat["AREA_CFAR"] >= 36100
+        #concat.loc[condition, "AREA"] = concat["AREA_CFAR"]
+        #concat.loc[~condition, "AREA"] = concat[col_area_final]
+        concat.rename(columns={"md": "md_backscatter"}, inplace=True)
+        return concat
+       
     def _extract_backscatter_stats(self, clutter, contrast):
-        for i, key in enumerate(POLARIZATIONS + ["ia"]):  # channels and incidence angle
-            data = self.data_s1[i]
-            stats = zonal_stats(self.icebergs, self.prep.decibels_to_linear(data) if key != "ia" else data, affine=self.meta_s1["transform"], stats=STATS, nodata=np.nan)  # calc stats in linear intensities
-            for j, stat in enumerate(stats):  # individual statistics (only mean in this case)
-                for stat_name, value in stat.items():
-                    self.icebergs.loc[j, f"{key}_{stat_name}"] = self.prep.linear_to_decibels(value) if key != "ia" else value  # save stats in decibels
-        for i, (key, data) in enumerate(zip(["clutter", "contrast"], [clutter, contrast])):
-            for pol_idx, pol in enumerate(POLARIZATIONS):
-                stats = zonal_stats(self.icebergs, self.prep.decibels_to_linear(data[pol_idx]), affine=self.meta_s1["transform"], stats=STATS, nodata=np.nan)  # calc stats in linear intensities
-                for j, stat in enumerate(stats):  # individual stats (only mean in this case)
-                    for stat_name, value in stat.items():
-                        self.icebergs.loc[j, f"{pol}_{key}_{stat_name}"] = self.prep.linear_to_decibels(value)  # save stats in decibels
+        channels = POLARIZATIONS + ["ia"]
+        stats_list = Parallel(n_jobs=N_JOBS)(delayed(self._do_extract_statistics)(self.data_s1[i], channel) for i, channel in enumerate(channels))
+        for key, stats in zip(channels, stats_list):
+            self.icebergs[f"{key}_mean"] = np.float32(self.prep.linear_to_decibels(stats["mean"]) if key != "ia" else stats["mean"])
+        for key, data in zip(["clutter", "contrast"], [clutter, contrast]):
+            stats_list = Parallel(n_jobs=N_JOBS)(delayed(self._do_extract_statistics)(data[i], pol) for i, pol in enumerate(POLARIZATIONS))
+            for pol, stats in zip(POLARIZATIONS, stats_list):
+                self.icebergs[f"{pol}_{key}_mean"] = np.float32(self.prep.linear_to_decibels(stats["mean"]))
+
+    def _do_extract_statistics(self, data, channel):
+        stats_df = pd.DataFrame(zonal_stats(self.icebergs, self.prep.decibels_to_linear(data) if channel != "ia" else data, affine=self.meta_s1["transform"], stats=STATS, nodata=np.nan))
+        return stats_df
 
     def _predict_area(self, features, pol):
         model = self.io.read_model(pol)
@@ -112,5 +192,23 @@ class S1IcebergArea:
         return features
 
     @staticmethod
+    def _calculate_length(polygon):
+        polygon = polygon.simplify(20)
+        line_lengths = []
+        for p in polygon.exterior.coords:
+            for p1 in polygon.exterior.coords:
+                line_lengths.append(LineString([p, p1]).length)
+        return np.nanmax(line_lengths)
+
+    @staticmethod
     def _calc_perimeter_index(polygons):
         return (2 * np.sqrt(np.pi * polygons.area)) / polygons.exterior.length
+
+    @staticmethod
+    def _add_polarization_to_column(df, pol):
+        for col in df:
+            if "index_r" in col or "index_l" in col:
+                del df[col]
+            if col[-2:].lower() != pol and col != "geometry":
+                df.rename(columns={col: "_".join([col, pol])}, inplace=True)
+        return df

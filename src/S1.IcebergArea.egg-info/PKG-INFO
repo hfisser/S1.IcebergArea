@@ -6,19 +6,6 @@ Author: Henrik Fisser
 Author-email: henrik.fisser@uit.no
 License: Tbd
 License-File: LICENSE
-Requires-Dist: catboost==1.2.5
-Requires-Dist: fiona==1.9.6
-Requires-Dist: geopandas==0.12.2
-Requires-Dist: ipython
-Requires-Dist: loguru
-Requires-Dist: lxml
-Requires-Dist: netCDF4==1.5.7
-Requires-Dist: numba==0.56.4
-Requires-Dist: numpy==1.23.5
-Requires-Dist: rasterio==1.2.10
-Requires-Dist: rasterstats==0.20.0
-Requires-Dist: scikit-image==0.19.3
-Requires-Dist: scipy==1.10.0
 
 # S1.IcebergArea
 Predict backscatter-sensitive iceberg above-waterline areas from Sentinel-1 extra-wide (EW) swath data.

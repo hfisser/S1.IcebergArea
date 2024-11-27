@@ -48,7 +48,10 @@ class CFAR:
         labels = label(outliers).astype(np.float32)  # float32 for shapes() method
         results = Parallel(n_jobs=6)(delayed(self._do_polygonize)(labels, value, transform, crs) for value in np.unique(labels[np.isfinite(labels)]))
         polygons = gpd.GeoDataFrame(pd.concat(results))
-        polygons.geometry = polygons["geometry"]
+        try:
+            polygons.geometry = polygons["geometry"]
+        except KeyError:
+            return []
         polygons.crs = crs
         polygons.index = list(range(len(polygons)))
         polygons["area"] = polygons.area
