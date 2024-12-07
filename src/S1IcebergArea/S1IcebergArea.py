@@ -18,7 +18,7 @@ This code runs models for iceberg area prediction from Sentinel-1 EW GRDM data (
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-3s %(message)s")
 
 N_JOBS = 4
-POLARIZATIONS = ["hv", "hh"]
+POLARIZATIONS = ["hh", "hv"]
 PFA = 1e-6
 OWS = 49
 STATS = "mean"
@@ -91,7 +91,7 @@ class S1IcebergArea:
         logging.info("Merging channels")
         if len(icebergs_both_channels) > 0:
             icebergs_both_channels["hh_hv_merged"] = self._merge_channels(icebergs_both_channels)
-        icebergs_both_channels["hh_hv_merged"] = self._calculate_synthesized_areas(icebergs_both_channels["hh_hv_merged"])
+        #icebergs_both_channels["hh_hv_merged"] = self._calculate_synthesized_areas(icebergs_both_channels["hh_hv_merged"])
         logging.info("Finished S1 iceberg detection and area retrieval")
         return icebergs_both_channels
 
@@ -165,9 +165,9 @@ class S1IcebergArea:
         return concat
        
     def _extract_backscatter_stats(self, clutter, contrast):
-        channels = POLARIZATIONS + ["ia"]
-        stats_list = Parallel(n_jobs=N_JOBS)(delayed(self._do_extract_statistics)(self.data_s1[i], channel) for i, channel in enumerate(channels))
-        for key, stats in zip(channels, stats_list):
+        channels_data_order = ["hv", "hh", "ia"]
+        stats_list = Parallel(n_jobs=N_JOBS)(delayed(self._do_extract_statistics)(self.data_s1[i], channel) for i, channel in enumerate(channels_data_order))  # reverted order!
+        for key, stats in zip(channels_data_order, stats_list):
             self.icebergs[f"{key}_mean"] = np.float32(self.prep.linear_to_decibels(stats["mean"]) if key != "ia" else stats["mean"])
         for key, data in zip(["clutter", "contrast"], [clutter, contrast]):
             stats_list = Parallel(n_jobs=N_JOBS)(delayed(self._do_extract_statistics)(data[i], pol) for i, pol in enumerate(POLARIZATIONS))

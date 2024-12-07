@@ -19,10 +19,12 @@ files_s1 = [
 
 files_s1 = [files_s1[-1]]
 
+files_s1 = ["/media/henrik/DATA/raster/s1/25WER/S1B_EW_GRDM_1SDH_20200830T194024_20200830T194110_023157_02BF84_D7C6_3996_40_rm_thermal_noise_hvTrue_rm_texture_noise_hvTrue.tif"]
+
 
 def test(file_s1):
     file_aoi = glob(os.path.join("/home/henrik/Output/icebergs/validation", os.path.basename(os.path.dirname(file_s1)), "ocean_buffered_300*{}.gpkg".format(os.path.basename(file_s1).split(".")[0])))[0]
-    #file_aoi = "/media/henrik/DATA/aoi.gpkg"  ########
+    file_aoi = "/media/henrik/DATA/aoi.gpkg"  ########
     aoi = gpd.read_file(file_aoi)
     iceberg_area = S1IcebergArea()
     #iceberg_area.prepare_s1(dir_safe, os.path.dirname(dir_safe))
