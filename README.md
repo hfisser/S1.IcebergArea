@@ -43,7 +43,7 @@ A dictionary holding one geopandas GeoDataFrame per polarization channel. The Ge
 ### Algorithm
 The algorithm has been developed and tested for icebergs in open water. The algorithm predicts iceberg areas based on backscatter statistics of icebergs. The implementation in this package follows three steps:
 1. Preprocessing with calibration, geocoding, noise removal (HV).
-2. CFAR iceberg delineation, using a CFAR gamma detector with a 10<sup>-6</sup> probability of false alarm, a 29-pixel outer window size, and a 21-pixel guard window size. CFAR runs separately for the HH channel, and the HV channel.
+2. CFAR iceberg delineation, using a CFAR gamma detector with a 10<sup>-6</sup> probability of false alarm, a 49-pixel outer window size, and a 29-pixel guard window size. CFAR runs separately for the HH channel, and the HV channel.
 3. Iceberg area prediction, using the backscatter-sensitive iceberg area model (*BackscatterRL* CatBoost model). The model runs separately for the HH channel, and the HV channel.
 
 ### Background
@@ -54,6 +54,7 @@ Besides standard Python packages, we use code from three packages:
 1. The [Sentinel1Denoised package](https://github.com/nansencenter/sentinel1denoised/blob/master/README.md).
 2. Laust Færch implemented the CFAR algorithm used in this module: [CFAR object detection](https://github.com/LaustFaerch/cfar-object-detection). A modified version was used.
 3. Johannes Lohse and Catherine Taelman wrote the geocoding module for synthetic aperture radar data: [geocoding](https://github.com/jlo031/geocoding). A modified version was used.
+
 
 
 
